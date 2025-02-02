@@ -265,6 +265,7 @@ async function handleLogin(event) {
            // Hide login wrapper and show app wrapper
            document.getElementById('loginWrapper').style.display = 'none';
            document.getElementById('appWrapper').style.display = 'block';
+           document.getElementById('registerForm').classList.add('hidden');
 
            // Update displayed name
            const userGreeting = document.querySelector('#duties h2');
@@ -697,11 +698,11 @@ function updateConstraintsSection() {
                     <div class="space-x-4 flex">
                         <label class="flex items-center">
                             <input type="radio" name="shootingRange" value="yes" class="ml-2">
-                            כן
+                            <span class="ml-[5px]">כן</span>
                         </label>
                         <label class="flex items-center">
                             <input type="radio" name="shootingRange" value="no" class="ml-2">
-                            לא
+                            <span class="ml-[5px]">לא</span>
                         </label>
                     </div>
                 </div>
@@ -712,11 +713,11 @@ function updateConstraintsSection() {
                     <div class="space-x-4 flex">
                         <label class="flex items-center">
                             <input type="radio" name="isDistant" value="yes" class="ml-2">
-                            כן
+                            <span class="ml-[5px]">כן</span>
                         </label>
                         <label class="flex items-center">
                             <input type="radio" name="isDistant" value="no" class="ml-2">
-                            לא
+                            <span class="ml-[5px]">לא</span>
                         </label>
                     </div>
                 </div>
@@ -1096,7 +1097,7 @@ async function handleSwitchChoice(switchId, assignmentId) {
         });
 
         // Close the modal if it exists
-        const modal = document.querySelector('.fixed');
+        const modal = document.querySelector('.modal-overlay');
         if (modal) {
             modal.remove();
         }
@@ -1104,7 +1105,7 @@ async function handleSwitchChoice(switchId, assignmentId) {
         // Show success message
         alert('ההחלפה בוצעה בהצלחה');
 
-        // Navigate to main screen and ensure UI is visible
+        // Navigate to duties section and ensure app wrapper is visible
         document.getElementById('appWrapper').style.display = 'block';
         showSection('duties');
         loadUserDuties();
@@ -1113,18 +1114,30 @@ async function handleSwitchChoice(switchId, assignmentId) {
         console.error('Error in handleSwitchChoice:', error);
         alert('שגיאה בביצוע ההחלפה');
     }
-} function toggleSwitchesFilter() {
-     const toggle = document.getElementById('toggle');
-     const label = document.getElementById('toggleLabel');
+}
+function toggleSwitchesFilter(isAvailable) {
+    const btnAll = document.getElementById('btnAll');
+    const btnAvailable = document.getElementById('btnAvailable');
+    
+    if (isAvailable) {
+        btnAvailable.classList.add('bg-blue-600', 'text-white');
+        btnAvailable.classList.remove('bg-gray-100', 'text-gray-700');
+        btnAll.classList.add('bg-gray-100', 'text-gray-700');
+        btnAll.classList.remove('bg-blue-600', 'text-white');
+    } else {
+        btnAll.classList.add('bg-blue-600', 'text-white');
+        btnAll.classList.remove('bg-gray-100', 'text-gray-700');
+        btnAvailable.classList.add('bg-gray-100', 'text-gray-700');
+        btnAvailable.classList.remove('bg-blue-600', 'text-white');
+    }
+    
+    loadSwitchRequests(isAvailable ? 'available' : 'all');
+}
 
-     if (toggle.checked) {
-         label.textContent = 'זמין עבורי';
-         loadSwitchRequests('available');
-     } else {
-         label.textContent = 'כל ההחלפות';
-         loadSwitchRequests('all');
-     }
- }
+// Set initial state when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    toggleSwitchesFilter(false);  // Start with 'כל ההחלפות' active
+});
 
 async function getUserAvailableAssignments(userNumber, startDate, endDate) {
     try {
@@ -1424,32 +1437,54 @@ function initializeCalendar() {
 
 // Load duties for the current month
 async function loadCalendarDuties() {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
     try {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        
+        // Create start and end dates for the current month
+        const startOfMonth = new Date(currentYear, currentMonth, 1, 0, 0, 0);
+        const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+
+        // Get all duties for the current month
         const dutiesSnapshot = await db.collection('duties')
             .where('date', '>=', startOfMonth)
             .where('date', '<=', endOfMonth)
             .get();
 
+        // Initialize duties count object
         const dutiesPerDay = {};
+
+        // Count duties for each day
         dutiesSnapshot.forEach(doc => {
             const duty = doc.data();
-            const dateStr = duty.date.toDate().toDateString();
-            dutiesPerDay[dateStr] = (dutiesPerDay[dateStr] || 0) + 1;
+            // Convert Firestore timestamp to Date
+            const dutyDate = new Date(duty.date.seconds * 1000);
+            const dayOfMonth = dutyDate.getDate();
+            
+            // Initialize or increment the count
+            if (!dutiesPerDay[dayOfMonth]) {
+                dutiesPerDay[dayOfMonth] = 0;
+            }
+            dutiesPerDay[dayOfMonth]++;
         });
 
+        console.log('Duties found:', dutiesSnapshot.size); // Debug log
+        console.log('Duties per day:', dutiesPerDay); // Debug log
+
+        // Update calendar with the counts
         populateCalendar2(dutiesPerDay);
+
     } catch (error) {
-        console.error('Error loading duties:', error);
+        console.error('Error loading calendar duties:', error);
     }
 }
 
-// Populate calendar with days and duty counts
+// Update the calendar display function
 function populateCalendar2(dutiesPerDay) {
     const calendar = document.querySelector('.calendar');
+    if (!calendar) return;
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -1458,7 +1493,6 @@ function populateCalendar2(dutiesPerDay) {
     const days = calendar.querySelectorAll('.calendar-day:not(.font-bold)');
     days.forEach(day => day.remove());
 
-    // Calculate first day of month and total days
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
 
@@ -1473,16 +1507,16 @@ function populateCalendar2(dutiesPerDay) {
     for (let date = 1; date <= lastDate; date++) {
         const dayElement = document.createElement('div');
         dayElement.className = 'calendar-day';
-
-        const currentDate = new Date(currentYear, currentMonth, date);
-        const duties = dutiesPerDay[currentDate.toDateString()] || 0;
-
+        
+        // Get the count for this day (0 if no duties)
+        const duties = dutiesPerDay[date] || 0;
+        
         dayElement.innerHTML = `
             <span>${date}</span>
-            ${duties > 0 ? `<span class="duty-count">${duties} תורנויות</span>` : ''}
+            <span class="duty-count">${duties}</span>
         `;
 
-        dayElement.onclick = () => showDayDuties(currentDate);
+        dayElement.onclick = () => showDayDuties(new Date(currentYear, currentMonth, date));
         calendar.appendChild(dayElement);
     }
 }
@@ -1538,3 +1572,27 @@ async function showDayDuties(date) {
     } catch (error) {
         console.error('Error showing duties:', error);
     }}
+
+async function handleLogout() {
+    try {
+        await auth.signOut();
+        localStorage.removeItem('userData');
+        
+        // Hide app wrapper and show login wrapper
+        document.getElementById('appWrapper').style.display = 'none';
+        document.getElementById('loginWrapper').style.display = 'block';
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        
+        // Close settings modal
+        closeSettings();
+        
+        // Clear any form inputs
+        document.getElementById('loginPhone').value = '';
+        document.getElementById('loginPassword').value = '';
+        
+    } catch (error) {
+        console.error('Error logging out:', error);
+        alert('שגיאה בהתנתקות מהמערכת');
+    }
+} 
