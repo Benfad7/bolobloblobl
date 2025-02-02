@@ -191,7 +191,7 @@ async function handleLogin(event) {
             phoneNumber: userData.phoneNumber,
             personalNumber: userData.personalNumber,
             releaseDate: userData.releaseDate,
-            isOwner: currentIsOwner // Explicitly store the current isOwner value
+            isOwner: currentIsOwner
         };
 
         localStorage.setItem('userData', JSON.stringify(userDataToStore));
@@ -206,8 +206,14 @@ async function handleLogin(event) {
             userGreeting.textContent = `שלום, ${userData.fullName}`;
         }
 
-        // Immediately initialize settings with new isOwner value
+        // Initialize UI based on user permissions
         await initializeSettings();
+        
+        // Show/hide owner elements based on current user's permissions
+        const ownerElements = document.querySelectorAll('.owner-only');
+        ownerElements.forEach(element => {
+            element.style.display = currentIsOwner ? 'block' : 'none';
+        });
 
     } catch (error) {
         console.error(error);
@@ -1121,13 +1127,15 @@ function toggleSwitchesFilter(isAvailable) {
     
     if (isAvailable) {
         btnAvailable.classList.add('bg-blue-600', 'text-white');
-        btnAvailable.classList.remove('bg-gray-100', 'text-gray-700');
-        btnAll.classList.add('bg-gray-100', 'text-gray-700');
+-       btnAvailable.classList.remove('bg-gray-100', 'text-gray-700');
++       btnAvailable.classList.remove('bg-gray-200', 'text-gray-800');
+        btnAll.classList.add('bg-gray-200', 'text-gray-800');
         btnAll.classList.remove('bg-blue-600', 'text-white');
     } else {
         btnAll.classList.add('bg-blue-600', 'text-white');
-        btnAll.classList.remove('bg-gray-100', 'text-gray-700');
-        btnAvailable.classList.add('bg-gray-100', 'text-gray-700');
+-       btnAll.classList.remove('bg-gray-100', 'text-gray-700');
++       btnAll.classList.remove('bg-gray-200', 'text-gray-800');
+        btnAvailable.classList.add('bg-gray-200', 'text-gray-800');
         btnAvailable.classList.remove('bg-blue-600', 'text-white');
     }
     
@@ -1346,7 +1354,7 @@ function renderCalendar(dutiesMap) {
                 <div class="font-medium">${day}</div>
                 ${duties.length > 0 ? `
                     <div class="text-xs text-blue-600 dark:text-blue-400">
-                        ${duties.length} תורנויות
+                        ${duties.length}
                     </div>
                 ` : ''}
             </div>
@@ -1433,6 +1441,7 @@ function closeDutyModal() {
 // Initialize calendar when needed
 function initializeCalendar() {
     updateCalendarUI();
+    loadCalendarDuties();
 }
 
 // Load duties for the current month
@@ -1458,15 +1467,12 @@ async function loadCalendarDuties() {
         // Count duties for each day
         dutiesSnapshot.forEach(doc => {
             const duty = doc.data();
-            // Convert Firestore timestamp to Date
-            const dutyDate = new Date(duty.date.seconds * 1000);
+            // Properly convert Firestore timestamp to Date
+            const dutyDate = duty.date.toDate();
             const dayOfMonth = dutyDate.getDate();
             
             // Initialize or increment the count
-            if (!dutiesPerDay[dayOfMonth]) {
-                dutiesPerDay[dayOfMonth] = 0;
-            }
-            dutiesPerDay[dayOfMonth]++;
+            dutiesPerDay[dayOfMonth] = (dutiesPerDay[dayOfMonth] || 0) + 1;
         });
 
         console.log('Duties found:', dutiesSnapshot.size); // Debug log
@@ -1590,6 +1596,12 @@ async function handleLogout() {
         // Clear any form inputs
         document.getElementById('loginPhone').value = '';
         document.getElementById('loginPassword').value = '';
+        
+        // Reset owner-specific UI elements
+        const ownerElements = document.querySelectorAll('.owner-only');
+        ownerElements.forEach(element => {
+            element.style.display = 'none';
+        });
         
     } catch (error) {
         console.error('Error logging out:', error);
