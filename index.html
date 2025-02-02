@@ -293,13 +293,15 @@
         <div id="exchanges" class="section hidden">
             <div class="mt-6">
                 <h2 class="text-2xl font-bold mb-4">החלפות</h2>
-                <div class="flex justify-between mb-4">
-                    <!-- Toggle Button -->
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" onclick="toggleSwitchesFilter()"/>
-                        <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                <div class="flex justify-center mb-4">
+                    <div class="inline-flex bg-gray-100 rounded-lg shadow-sm">
+                        <button id="btnAll" class="min-w-[180px] px-6 py-2 text-sm font-medium rounded-r-lg border-l transition-all duration-200" onclick="toggleSwitchesFilter(false)">
+                            כל ההחלפות
+                        </button>
+                        <button id="btnAvailable" class="min-w-[180px] px-6 py-2 text-sm font-medium rounded-l-lg transition-all duration-200" onclick="toggleSwitchesFilter(true)">
+                            זמין עבורי
+                        </button>
                     </div>
-                    <span id="toggleLabel" class="text-sm text-gray-700 dark:text-gray-300">כל ההחלפות</span>
                 </div>
                 <div id="switchRequests" class="space-y-3">
                     <!-- Switch requests will be populated here -->
@@ -364,7 +366,7 @@
         <div id="constraints" class="section hidden">
             <div class="mt-6">
                 <h2 class="text-2xl font-bold mb-4">האילוצים שלי</h2>
-                <div class="exchange-form">
+                <div class="exchange-form mb-20">
                     <form onsubmit="submitConstraints(event)">
                         <div class="space-y-4">
                             <div>
@@ -375,6 +377,26 @@
                             <div>
                                 <label class="block mb-2">סיבה</label>
                                 <textarea class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows="3"></textarea>
+                            </div>
+                            <div class="space-x-4 flex">
+                                <label class="flex items-center">
+                                    <input type="radio" name="shootingRange" value="yes" class="ml-2">
+                                    <span style="margin-left: 5px;">כן</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="shootingRange" value="no" class="ml-2">
+                                    <span style="margin-left: 5px;">לא</span>
+                                </label>
+                            </div>
+                            <div class="space-x-4 flex">
+                                <label class="flex items-center">
+                                    <input type="radio" name="isDistant" value="yes" class="ml-2">
+                                    <span style="margin-left: 5px;">כן</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="isDistant" value="no" class="ml-2">
+                                    <span style="margin-left: 5px;">לא</span>
+                                </label>
                             </div>
                             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">שמור אילוצים</button>
                         </div>
@@ -387,13 +409,13 @@
     <!-- Settings Modal -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-20">
         <div class="bg-white dark:bg-gray-800 rounded-t-2xl p-4 absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4" style="direction: ltr;">
                 <button onclick="closeSettings()" class="text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
-                <h2 class="text-xl font-bold">הגדרות</h2>
+                <h2 class="text-xl font-bold ml-auto" style="direction: rtl;">הגדרות</h2>
             </div>
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -408,8 +430,14 @@
                     </button>
                     <span>התראות</span>
                 </div>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button onclick="handleLogout()" 
+                            class="w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                        התנתק
+                    </button>
+                </div>
             </div>
-        </div>
+        </div>  
     </div>
 </div>
 
@@ -418,6 +446,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
 <script src="javaScript.js"></script>
-
+ 
 </body>
 </html>
