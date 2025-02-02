@@ -1743,7 +1743,7 @@ async function submitQuestionnaire(event) {
             isDistant,
             exemptions,
             otherExemption,
-            specialCondition,
+            assignedDutyType: specialCondition,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
