@@ -294,11 +294,11 @@
             <div class="mt-6">
                 <h2 class="text-2xl font-bold mb-4">החלפות</h2>
                 <div class="flex justify-center mb-4">
-                    <div class="inline-flex bg-gray-100 rounded-lg shadow-sm">
-                        <button id="btnAll" class="min-w-[180px] px-6 py-2 text-sm font-medium rounded-r-lg border-l transition-all duration-200" onclick="toggleSwitchesFilter(false)">
+                    <div class="inline-flex bg-gray-100 rounded-lg shadow-sm w-full max-w-md">
+                        <button id="btnAll" class="flex-1 px-6 py-2 text-sm font-medium rounded-r-lg border-l transition-all duration-200" onclick="toggleSwitchesFilter(false)">
                             כל ההחלפות
                         </button>
-                        <button id="btnAvailable" class="min-w-[180px] px-6 py-2 text-sm font-medium rounded-l-lg transition-all duration-200" onclick="toggleSwitchesFilter(true)">
+                        <button id="btnAvailable" class="flex-1 px-6 py-2 text-sm font-medium rounded-l-lg transition-all duration-200" onclick="toggleSwitchesFilter(true)">
                             זמין עבורי
                         </button>
                     </div>
@@ -306,7 +306,7 @@
                 <div id="switchRequests" class="space-y-3">
                     <!-- Switch requests will be populated here -->
                 </div>
-                <button onclick="openSwitchRequestForm()" class="fixed bottom-4 left-4 bg-blue-600 text-white rounded-full p-4 shadow-lg">
+                <button onclick="openSwitchRequestForm()" class="fixed bottom-4 left-4 bg-blue-600 text-white rounded-full p-4 shadow-lg owner-only">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -366,7 +366,7 @@
         <div id="constraints" class="section hidden">
             <div class="mt-6">
                 <h2 class="text-2xl font-bold mb-4">האילוצים שלי</h2>
-                <div class="exchange-form mb-20">
+                <div class="exchange-form mb-32">
                     <form onsubmit="submitConstraints(event)">
                         <div class="space-y-4">
                             <div>
