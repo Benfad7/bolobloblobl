@@ -250,11 +250,12 @@
             <button onclick="showSection('exchanges')" class="w-full text-right py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">החלפות</button>
             <button onclick="showSection('calendar')" class="w-full text-right py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">לוח חודשי</button>
             <button onclick="showSection('constraints')" class="w-full text-right py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">האילוצים שלי</button>
+            <button onclick="showSection('questionnaire')" class="w-full text-right py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">שאלון</button>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="pt-16 px-4">
+    <div class="pt-16 px-4 pr-4">
         <!-- My Duties Section -->
         <div id="duties" class="section">
             <div class="mt-6">
@@ -388,20 +389,102 @@
                                     <span style="margin-left: 5px;">לא</span>
                                 </label>
                             </div>
-                            <div class="space-x-4 flex">
-                                <label class="flex items-center">
-                                    <input type="radio" name="isDistant" value="yes" class="ml-2">
-                                    <span style="margin-left: 5px;">כן</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="isDistant" value="no" class="ml-2">
-                                    <span style="margin-left: 5px;">לא</span>
-                                </label>
-                            </div>
                             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">שמור אילוצים</button>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questionnaire Section -->
+    <div id="questionnaire" class="section hidden">
+        <div class="mt-6 px-4">
+            <h2 class="text-2xl font-bold mb-4">שאלון</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md mb-32">
+                <form id="questionnaireForm" onsubmit="submitQuestionnaire(event)">
+                    <div class="space-y-6">
+                        <!-- Service Type -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">מה סוג השירות בבסיס?</h3>
+                            <div class="space-x-4 flex">
+                                <label class="flex items-center">
+                                    <input type="radio" name="serviceType" value="closed" class="ml-2" required>
+                                    <span style="margin-right: 5px;">סגור</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="serviceType" value="open" class="ml-2">
+                                    <span style="margin-right: 5px;">פתוח</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Distance Question -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">האם אתה מרוחק?</h3>
+                            <div class="space-x-4 flex">
+                                <label class="flex items-center">
+                                    <input type="radio" name="isDistant" value="yes" class="ml-2" required>
+                                    <span style="margin-right: 5px;">כן</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="isDistant" value="no" class="ml-2">
+                                    <span style="margin-right: 5px;">לא</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Exemptions -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">האם יש לך פטור כלשהו?</h3>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="exemptions" value="weight" class="ml-2">
+                                    <span style="margin-right: 5px;">פטור משקל</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="exemptions" value="guard" class="ml-2">
+                                    <span style="margin-right: 5px;">פטור שמירות</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="exemptions" value="kitchen" class="ml-2">
+                                    <span style="margin-right: 5px;">פטור מטבחים</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="exemptions" value="other" class="ml-2">
+                                    <span style="margin-right: 5px;">אחר</span>
+                                </label>
+                                <input type="text" id="otherExemption" placeholder="פרט..." 
+                                       class="w-full p-2 border rounded mt-2 hidden dark:bg-gray-700 dark:border-gray-600">
+                            </div>
+                        </div>
+                        
+                        <!-- Special Conditions -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">האם יש לך תנאים מיוחדים?</h3>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="radio" name="specialCondition" value="medium" class="ml-2" required>
+                                    <span style="margin-right: 5px;">בינוני</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="specialCondition" value="fat" class="ml-2">
+                                    <span style="margin-right: 5px;">שמן</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="specialCondition" value="thin" class="ml-2">
+                                    <span style="margin-right: 5px;">רזה</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                                שלח שאלון
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
