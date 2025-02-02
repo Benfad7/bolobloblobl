@@ -39,13 +39,21 @@ function toggleMenu() {
     menu.classList.toggle('active');
 }
 
-function showSection(sectionId) {
+async function showSection(sectionId) {
     // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.add('hidden');
     });
     // Show selected section
     document.getElementById(sectionId).classList.remove('hidden');
+    
+    // Additional section-specific initializations
+    if (sectionId === 'questionnaire') {
+        await loadUserQuestionnaire();
+    } else if (sectionId === 'questionnaireApprovals') {
+        await loadPendingQuestionnaires();
+    }
+    
     // Close menu
     document.getElementById('navMenu').classList.remove('active');
 }
@@ -575,32 +583,46 @@ function createDutyCard(duty) {
     card.className = 'duty-card';
 
     const date = duty.date.toDate();
-    const formattedDate = new Intl.DateTimeFormat('he-IL', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'numeric'
-    }).format(date);
+    const statusText = getDutyStatusText(date);
+    const statusClass = statusText === 'סיימתי' ? 'bg-green-100 text-green-800' :
+                      statusText === 'היום' ? 'bg-red-100 text-red-800' :
+                      statusText === 'מחר' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-blue-100 text-blue-800';
 
     card.innerHTML = `
         <div class="flex justify-between items-center">
             <div>
                 <h4 class="font-medium">${duty.kind}</h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400">${formattedDate}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    ${date.toLocaleDateString('he-IL', { weekday: 'long' })}, ${date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}
+                </p>
             </div>
-                <span class="text-xs px-2 py-1 rounded
-                    ${isUpcoming(date) ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}">
-                    ${isUpcoming(date) ? 'בקרוב' : 'סיימת'}
-                </span>
+            <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded">
+                ${statusText}
+            </span>
         </div>
     `;
 
     return card;
 }
    // Helper function to check if duty is upcoming
-   function isUpcoming(date) {
+   function getDutyStatusText(dutyDate) {
        const now = new Date();
-       const threeDays = 3 * 24 * 60 * 60 * 1000;
-       return date > now && date - now < threeDays;
+       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+       const tomorrow = new Date(today);
+       tomorrow.setDate(tomorrow.getDate() + 1);
+       
+       const dutyDay = new Date(dutyDate.getFullYear(), dutyDate.getMonth(), dutyDate.getDate());
+       
+       if (dutyDay < today) {
+           return 'סיימתי';
+       } else if (dutyDay.getTime() === today.getTime()) {
+           return 'היום';
+       } else if (dutyDay.getTime() === tomorrow.getTime()) {
+           return 'מחר';
+       } else {
+           return 'בקרוב';
+       }
    }
 
    // Initialize event listeners
@@ -1127,14 +1149,12 @@ function toggleSwitchesFilter(isAvailable) {
     
     if (isAvailable) {
         btnAvailable.classList.add('bg-blue-600', 'text-white');
--       btnAvailable.classList.remove('bg-gray-100', 'text-gray-700');
-+       btnAvailable.classList.remove('bg-gray-200', 'text-gray-800');
+        btnAvailable.classList.remove('bg-gray-200', 'text-gray-800');
         btnAll.classList.add('bg-gray-200', 'text-gray-800');
         btnAll.classList.remove('bg-blue-600', 'text-white');
     } else {
         btnAll.classList.add('bg-blue-600', 'text-white');
--       btnAll.classList.remove('bg-gray-100', 'text-gray-700');
-+       btnAll.classList.remove('bg-gray-200', 'text-gray-800');
+        btnAll.classList.remove('bg-gray-200', 'text-gray-800');
         btnAvailable.classList.add('bg-gray-200', 'text-gray-800');
         btnAvailable.classList.remove('bg-blue-600', 'text-white');
     }
@@ -1607,4 +1627,82 @@ async function handleLogout() {
         console.error('Error logging out:', error);
         alert('שגיאה בהתנתקות מהמערכת');
     }
+}
+
+// Helper function to determine duty status text
+function getDutyStatusText(dutyDate) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const dutyDay = new Date(dutyDate.getFullYear(), dutyDate.getMonth(), dutyDate.getDate());
+    
+    if (dutyDay < today) {
+        return 'סיימתי';
+    } else if (dutyDay.getTime() === today.getTime()) {
+        return 'היום';
+    } else if (dutyDay.getTime() === tomorrow.getTime()) {
+        return 'מחר';
+    } else {
+        return 'בקרוב';
+    }
+}
+
+// Update the renderDuties function
+async function renderDuties(duties) {
+    const dutyContainer = document.querySelector('#duties');
+    if (!dutyContainer) return;
+
+    let dutyHTML = `
+        <div class="mt-6">
+            <h2 class="text-2xl font-bold">שלום, ${userData.fullName}</h2>
+            <p class="text-gray-600 dark:text-gray-400">ברוך הבא!</p>
+        </div>
+    `;
+
+    // Group duties by type
+    const groupedDuties = duties.reduce((acc, duty) => {
+        if (!acc[duty.kind]) {
+            acc[duty.kind] = [];
+        }
+        acc[duty.kind].push(duty);
+        return acc;
+    }, {});
+
+    // Render each duty type
+    for (const [dutyType, dutyList] of Object.entries(groupedDuties)) {
+        dutyHTML += `
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-3">${dutyType}</h3>
+                ${dutyList.map(duty => {
+                    const dutyDate = duty.date.toDate();
+                    const statusText = getDutyStatusText(dutyDate);
+                    const statusClass = statusText === 'סיימתי' ? 'bg-gray-100 text-gray-800' :
+                                      statusText === 'היום' ? 'bg-green-100 text-green-800' :
+                                      statusText === 'מחר' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-blue-100 text-blue-800';
+                    
+                    return `
+                        <div class="duty-card">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">${duty.kind}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        ${dutyDate.toLocaleDateString('he-IL', { weekday: 'long' })}, 
+                                        ${dutyDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                                <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded">
+                                    ${statusText}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    dutyContainer.innerHTML = dutyHTML;
 } 
