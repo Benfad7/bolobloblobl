@@ -44,6 +44,7 @@ async function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
         section.classList.add('hidden');
     });
+    
     // Show selected section
     document.getElementById(sectionId).classList.remove('hidden');
     
@@ -597,7 +598,7 @@ function createDutyCard(duty) {
                     ${date.toLocaleDateString('he-IL', { weekday: 'long' })}, ${date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}
                 </p>
             </div>
-            <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded">
+            <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded w-[70px] text-center inline-block">
                 ${statusText}
             </span>
         </div>
@@ -737,15 +738,15 @@ function updateConstraintsSection() {
 
                 <!-- Distance Section -->
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-3">מרוחק?</h3>
+                    <h3 class="text-lg font-semibold mb-3">האם אתה מרוחק?</h3>
                     <div class="space-x-4 flex">
                         <label class="flex items-center">
-                            <input type="radio" name="isDistant" value="yes" class="ml-2">
-                            <span class="ml-[5px]">כן</span>
+                            <input type="radio" name="isDistant" value="yes" class="ml-2" required>
+                            <span style="margin-right: 5px;">כן</span>
                         </label>
                         <label class="flex items-center">
                             <input type="radio" name="isDistant" value="no" class="ml-2">
-                            <span class="ml-[5px]">לא</span>
+                            <span style="margin-right: 5px;">לא</span>
                         </label>
                     </div>
                 </div>
@@ -1678,8 +1679,8 @@ async function renderDuties(duties) {
                 ${dutyList.map(duty => {
                     const dutyDate = duty.date.toDate();
                     const statusText = getDutyStatusText(dutyDate);
-                    const statusClass = statusText === 'סיימתי' ? 'bg-gray-100 text-gray-800' :
-                                      statusText === 'היום' ? 'bg-green-100 text-green-800' :
+                    const statusClass = statusText === 'סיימתי' ? 'bg-green-100 text-green-800' :
+                                      statusText === 'היום' ? 'bg-red-100 text-red-800' :
                                       statusText === 'מחר' ? 'bg-yellow-100 text-yellow-800' :
                                       'bg-blue-100 text-blue-800';
                     
@@ -1690,10 +1691,10 @@ async function renderDuties(duties) {
                                     <h4 class="font-medium">${duty.kind}</h4>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
                                         ${dutyDate.toLocaleDateString('he-IL', { weekday: 'long' })}, 
-                                        ${dutyDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                                        ${dutyDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}
                                     </p>
                                 </div>
-                                <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded">
+                                <span class="${statusClass} dark:bg-opacity-20 text-xs px-2 py-1 rounded w-[70px] text-center inline-block">
                                     ${statusText}
                                 </span>
                             </div>
@@ -1705,4 +1706,54 @@ async function renderDuties(duties) {
     }
 
     dutyContainer.innerHTML = dutyHTML;
+}
+
+// Show/hide "other" exemption text input
+document.querySelectorAll('input[name="exemptions"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const otherInput = document.getElementById('otherExemption');
+        if (this.value === 'other') {
+            otherInput.classList.toggle('hidden', !this.checked);
+        }
+    });
+});
+
+// Handle questionnaire submission
+async function submitQuestionnaire(event) {
+    event.preventDefault();
+    
+    try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (!userData) throw new Error('User data not found');
+
+        const form = event.target;
+        const serviceType = form.serviceType.value;
+        const isDistant = form.isDistant.value;
+        const exemptions = Array.from(form.exemptions)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        const otherExemption = document.getElementById('otherExemption').value;
+        const specialCondition = form.specialCondition.value;
+
+        // Create questionnaire document
+        const questionnaireData = {
+            userId: userData.personalNumber,
+            userName: userData.fullName,
+            serviceType,
+            isDistant,
+            exemptions,
+            otherExemption,
+            specialCondition,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('questionnaires').add(questionnaireData);
+
+        alert('השאלון נשלח בהצלחה');
+        form.reset();
+
+    } catch (error) {
+        console.error('Error submitting questionnaire:', error);
+        alert('שגיאה בשליחת השאלון');
+    }
 } 
